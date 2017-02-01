@@ -57,9 +57,7 @@ def create_vgg_model():
     model.add(ZeroPadding2D((1, 1)))
     model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
     model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-    return model
 
-def load_vgg_weights(model):
     weights_file = h5py.File(VGG_MODEL_WEIGHTS_PATH)
     for k in range(weights_file.attrs['nb_layers']):
         if k >= len(model.layers) - 1:
@@ -89,7 +87,6 @@ def create_top_model(input_shape):
 
 def save_bottlebeck_features():
     model = create_vgg_model()
-    model = load_vgg_weights(model)
 
     train_set, validation_set = create_data()
 
@@ -132,7 +129,6 @@ def train_top_model():
 
 def finetune_model():
     model = create_vgg_model()
-    model = load_vgg_weights(model)
 
     top_model = create_top_model()
     top_model.load_weights(TOP_MODEL_WEIGHTS_PATH)
