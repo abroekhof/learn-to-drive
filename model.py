@@ -79,8 +79,6 @@ def load_vgg_weights(model):
 
 def create_top_model(input_shape):
     model = Sequential()
-    # Load some data to get the shape of the first layer.
-    validation_data = np.load(open('bottleneck_features_validation.npy', 'rb'))
     model.add(Flatten(input_shape=input_shape))
     model.add(Dense(256, activation='tanh'))
     model.add(Dropout(0.5))
@@ -128,12 +126,35 @@ def train_top_model():
     model = create_top_model(input_shape=train_data[0].shape)
     model.compile(loss='mse', optimizer='adam')
     model.fit(train_data, train_labels,
-              nb_epoch=50, batch_size=32,
+              nb_epoch=10, batch_size=32,
               validation_data=(validation_data, validation_labels))
     model.save_weights(TOP_MODEL_WEIGHTS_PATH)
+
+def finetune_model():
+    model = create_vgg_model()
+    model = load_vgg_weights(model)
+
+    top_model = create_top_model()
+    top_model.load_weights(TOP_MODEL_WEIGHTS_PATH)
+
+    model.add(top_model)
+    for layer in model.layers[:25]:
+        layer.trainable = False
+
+    model.compile(loss='mse', optimizer='adam')
+
+    train_set, validation_set = create_data()
+    model.fit_generator(
+        data_generator(train_set),
+        samples_per_epoch=len(train_set),
+        nb_epoch=10,
+        validation_data=data_generator(validation_set),
+        nb_val_samples=len(validation_set))
+    model.save_weights('model.h5')
     json_string = model.to_json()
     with open('model.json', mode='w') as f:
         f.write(json_string)
+
 
 def preprocess(image):
     # Convert to grayscale.
@@ -151,7 +172,7 @@ def preprocess(image):
     image = image.astype(np.float32, copy=False)
     return image
 
-def data_generator(rows, batch_size=16):
+def data_generator(rows, batch_size=32):
     iterator = Iterator(len(rows), batch_size=batch_size, shuffle=True, seed=None)
     for index_array, _, batch_size in iterator.index_generator:
         batch_x = np.zeros((batch_size, img_height, img_width, 3))
@@ -168,4 +189,4 @@ def data_generator(rows, batch_size=16):
 if __name__ == "__main__":
     save_bottlebeck_features()
     train_top_model()
-    # train_model(10)
+    finetune_model()
