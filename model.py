@@ -66,7 +66,7 @@ def load_vgg_weights(model):
             # we don't look at the last two layers in the savefile (fully-connected and activation)
             break
         weight_layer = weights_file['layer_{}'.format(k)]
-        weights = [weight_layer['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
+        weights = [weight_layer['param_{}'.format(p)] for p in range(weight_layer.attrs['nb_params'])]
         layer = model.layers[k]
 
         if layer.__class__.__name__ in [
