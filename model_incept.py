@@ -8,16 +8,21 @@ from data import create_data, data_generator
 
 def run():
     # create the base pre-trained model
+    print("loading inception")
     base_model = InceptionV3(weights='imagenet', include_top=False)
+    print("done loading inception")
 
     # add a global spatial average pooling layer
+    out_layer = base_model.get_layer(index=-1)
+    print("adding top model")
     top = base_model.output
-    top = Flatten(input_shape=top.output_shape)(top)
+    top = Flatten(input_shape=out_layer.output_shape)(top)
     top = Dense(256, activation='tanh')(top)
     top = Dropout(0.5)(top)
     top = Dense(64, activation='tanh')(top)
     top = Dropout(0.5)(top)
     predictions = Dense(1)(top)
+    print("done adding top model")
 
     # this is the model we will train
     model = Model(input=base_model.input, output=predictions)
@@ -28,7 +33,9 @@ def run():
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
+    print("compiling model")
     model.compile(optimizer='adam', loss='mse')
+    print("done compiling model")
 
     # train the model on the new data for a few epochs
 
@@ -58,7 +65,9 @@ def run():
 
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
+    print("compiling model")
     model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='mse')
+    print("done compiling model")
 
     # we train our model again (this time fine-tuning the top 2 inception blocks
     # alongside the top Dense layers
