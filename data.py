@@ -1,8 +1,8 @@
+import random
+import csv
 import numpy as np
 from PIL import Image
 from keras.preprocessing.image import Iterator
-import random
-import csv
 
 IMG_HEIGHT = 299
 IMG_WIDTH = 299
