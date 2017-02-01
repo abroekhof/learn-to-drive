@@ -12,7 +12,7 @@ def run():
 
     # add a global spatial average pooling layer
     top = base_model.output
-    top = Flatten()(top)
+    top = Flatten(input_shape=top.output_shape)(top)
     top = Dense(256, activation='tanh')(top)
     top = Dropout(0.5)(top)
     top = Dense(64, activation='tanh')(top)

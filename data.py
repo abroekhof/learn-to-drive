@@ -37,7 +37,7 @@ def preprocess(image):
     image = image.astype(np.float32, copy=False)
     return image
 
-def data_generator(rows, batch_size=32):
+def data_generator(rows, batch_size=16):
     iterator = Iterator(len(rows), batch_size=batch_size, shuffle=True, seed=None)
     for index_array, _, batch_size in iterator.index_generator:
         batch_x = np.zeros((batch_size, IMG_HEIGHT, IMG_WIDTH, 3))
