@@ -7,6 +7,7 @@ from keras.layers import Convolution2D, MaxPooling2D, ZeroPadding2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
 from keras.utils.np_utils import convert_kernel
+from keras.applications.vgg16 import VGG16
 
 import numpy as np
 import matplotlib.image as mpimg
@@ -21,59 +22,7 @@ TOP_MODEL_WEIGHTS_PATH = 'top_model.h5'
 VGG_MODEL_WEIGHTS_PATH = 'data/vgg16_weights.h5'
 
 def create_vgg_model():
-    model = Sequential()
-    model.add(ZeroPadding2D((1, 1), input_shape=(img_height, img_width, 3)))
-    model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
-    model.add(ZeroPadding2D((1, 1)))
-    model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
-    model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-    weights_file = h5py.File(VGG_MODEL_WEIGHTS_PATH)
-    for k in range(weights_file.attrs['nb_layers']):
-        if k >= len(model.layers) - 1:
-            # we don't look at the last two layers in the savefile (fully-connected and activation)
-            break
-        weight_layer = weights_file['layer_{}'.format(k)]
-        weights = [weight_layer['param_{}'.format(p)] for p in range(weight_layer.attrs['nb_params'])]
-        layer = model.layers[k]
-
-        if layer.__class__.__name__ in [
-                'Convolution1D', 'Convolution2D', 'Convolution3D', 'AtrousConvolution2D']:
-            weights[0] = np.transpose(weights[0], (2, 3, 1, 0))
-
-        layer.set_weights(weights)
-    weights_file.close()
-    return model
+    return VGG16(weights='imagenet', include_top=False)
 
 def create_top_model(input_shape):
     model = Sequential()
