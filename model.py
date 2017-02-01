@@ -118,7 +118,10 @@ def train_top_model():
     model.fit(train_data, train_labels,
               nb_epoch=50, batch_size=32,
               validation_data=(validation_data, validation_labels))
-    model.save_weights('bottleneck_fc_model.h5')
+    model.save_weights('model.h5')
+    json_string = model.to_json()
+    with open('model.json', mode='w') as f:
+        f.write(json_string)
 
 def preprocess(image):
     # Convert to grayscale.
