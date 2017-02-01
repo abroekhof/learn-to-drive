@@ -17,8 +17,10 @@ from PIL import Image
 img_height = 224
 img_width = 224
 
-def save_bottlebeck_features():
-    # build the VGG16 network
+TOP_MODEL_WEIGHTS_PATH = 'top_model.h5'
+VGG_MODEL_WEIGHTS_PATH = 'data/vgg16_weights.h5'
+
+def create_vgg_model():
     model = Sequential()
     model.add(ZeroPadding2D((1, 1), input_shape=(img_height, img_width, 3)))
     model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1'))
@@ -55,14 +57,16 @@ def save_bottlebeck_features():
     model.add(ZeroPadding2D((1, 1)))
     model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
     model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+    return model
 
-    f = h5py.File('data/vgg16_weights.h5')
-    for k in range(f.attrs['nb_layers']):
+def load_vgg_weights(model):
+    weights_file = h5py.File(VGG_MODEL_WEIGHTS_PATH)
+    for k in range(weights_file.attrs['nb_layers']):
         if k >= len(model.layers) - 1:
             # we don't look at the last two layers in the savefile (fully-connected and activation)
             break
-        g = f['layer_{}'.format(k)]
-        weights = [g['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
+        weight_layer = weights_file['layer_{}'.format(k)]
+        weights = [weight_layer['param_{}'.format(p)] for p in range(g.attrs['nb_params'])]
         layer = model.layers[k]
 
         if layer.__class__.__name__ in [
@@ -70,8 +74,24 @@ def save_bottlebeck_features():
             weights[0] = np.transpose(weights[0], (2, 3, 1, 0))
 
         layer.set_weights(weights)
+    weights_file.close()
+    return model
 
-    f.close()
+def create_top_model(input_shape):
+    model = Sequential()
+    # Load some data to get the shape of the first layer.
+    validation_data = np.load(open('bottleneck_features_validation.npy', 'rb'))
+    model.add(Flatten(input_shape=input_shape))
+    model.add(Dense(256, activation='tanh'))
+    model.add(Dropout(0.5))
+    model.add(Dense(64, activation='tanh'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1))
+    return model
+
+def save_bottlebeck_features():
+    model = create_vgg_model()
+    model = load_vgg_weights(model)
 
     train_set, validation_set = create_data()
 
@@ -105,20 +125,12 @@ def train_top_model():
     validation_data = np.load(open('bottleneck_features_validation.npy', 'rb'))
     validation_labels = np.array([row['steering'] for row in validation_set])
 
-    model = Sequential()
-    model.add(Flatten(input_shape=train_data.shape[1:]))
-    model.add(Dense(256, activation='tanh'))
-    model.add(Dropout(0.5))
-    model.add(Dense(64, activation='tanh'))
-    model.add(Dropout(0.5))
-    model.add(Dense(1))
-
+    model = create_top_model(input_shape=train_data[0].shape)
     model.compile(loss='mse', optimizer='adam')
-
     model.fit(train_data, train_labels,
               nb_epoch=50, batch_size=32,
               validation_data=(validation_data, validation_labels))
-    model.save_weights('model.h5')
+    model.save_weights(TOP_MODEL_WEIGHTS_PATH)
     json_string = model.to_json()
     with open('model.json', mode='w') as f:
         f.write(json_string)
@@ -151,41 +163,6 @@ def data_generator(rows, batch_size=16):
             batch_y[idx] = row['steering']
         yield (batch_x, batch_y)
 
-def create_model():
-    model = Sequential()
-    model.add(Convolution2D(32, 3, 3, input_shape=(img_height, img_width, 3)))
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D((2, 2)))
-
-    model.add(Convolution2D(32, 3, 3))
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D((2, 2)))
-
-    model.add(Convolution2D(64, 3, 3))
-    model.add(Activation('tanh'))
-    model.add(MaxPooling2D((2, 2)))
-
-    model.add(Flatten())
-    model.add(Dense(64))
-    model.add(Activation('tanh'))
-    model.add(Dropout(0.5))
-    model.add(Dense(1))
-
-    model.compile(loss='mse', optimizer='adam')
-    return model
-
-def train_model(nb_epoch):
-    train_set, validation_set = create_data()
-
-    model = create_model()
-    model.fit_generator(
-        data_generator(train_set),
-        samples_per_epoch=len(train_set),
-        nb_epoch=nb_epoch,
-        validation_data=data_generator(validation_set),
-        nb_val_samples=len(validation_set))
-
-    model.save_weights('first_try.h5')
 
 
 if __name__ == "__main__":
