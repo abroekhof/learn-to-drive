@@ -22,7 +22,10 @@ TOP_MODEL_WEIGHTS_PATH = 'top_model.h5'
 VGG_MODEL_WEIGHTS_PATH = 'data/vgg16_weights.h5'
 
 def create_vgg_model():
-    return VGG16(weights='imagenet', include_top=False)
+    print("Creating pre-trained model")
+    model = VGG16(weights='imagenet', include_top=False)
+    print("Done creating pre-trained model")
+    return model
 
 def create_top_model(input_shape):
     model = Sequential()
@@ -49,6 +52,7 @@ def save_bottlebeck_features():
     np.save(open('bottleneck_features_validation.npy', 'wb'), bottleneck_features_validation)
 
 def create_data():
+    print("Creating data")
     with open('data/driving_log.csv') as csvfile:
         reader = csv.DictReader(csvfile)
         rows = list(reader)
@@ -58,6 +62,7 @@ def create_data():
     split = int(len(rows)/10)
     train_data = rows[split:]
     validation_data = rows[:split]
+    print("Done creating data")
     return train_data, validation_data
 
 def train_top_model():
