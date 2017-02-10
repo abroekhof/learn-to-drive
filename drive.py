@@ -21,7 +21,6 @@ tf.python.control_flow_ops = tf
 
 from model import preprocess
 
-
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -39,10 +38,11 @@ def telemetry(sid, data):
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
-    transformed_image_array = image_array[None, :, :, :]
+    processed_image = preprocess(image_array)
+    transformed_image_array = processed_image[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
-    processed_image = preprocess(transformed_image_array)
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
+    steering_angle = steering_angle
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
     throttle = 0.2
     print(steering_angle, throttle)
