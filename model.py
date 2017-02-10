@@ -102,6 +102,7 @@ def steering_model():
     model.add(Dropout(.5))
     model.add(Dense(100, name="dense_1",
                     activation='relu'))
+    model.add(Dropout(.5))
     model.add(Dense(50, name="dense_2",
                     activation='relu'))
     model.add(Dense(10, name="dense_3",
@@ -116,7 +117,7 @@ def train_model():
     model.fit_generator(
         data_generator(train_set),
         samples_per_epoch=len(train_set),
-        nb_epoch=50,
+        nb_epoch=40,
         validation_data=data_generator(validation_set),
         nb_val_samples=len(validation_set))
     model.save_weights('model.h5')
