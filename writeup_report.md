@@ -26,7 +26,10 @@ The model then uses a number of densely connected layers with RELU activations t
 
 I drove the car around the track a few times, then tried to record recovery from the sides. I tried removing some of the zero-angle data points, as this biases the car towards no steering, which can lead it to going off the track.
 
+I augmented the data by flipping the images horizontally, and changing the sign of the steering angle. Images were resized to reduce high-frequency components and to also speed up training. I also experimented with cropping out the horizon, thinking that the main visual cues should be in the road. However I achieved better results leaving in the horizon
+
 I compiled my model to use the Mean Squared Error loss functions and to use the Adam optimizer, so to not need to change the learning rate.
 
 ###3. Evaluation
 
+I tested the trained model in the simulator. The car was able to stay within the track during the easier curves, but would often not be able to make it around the sharper bends. I'm wondering if this had something to do with number of data points associated with those portions of the track.
