@@ -65,7 +65,7 @@ def create_data():
 
 def preprocess(img):
     # Crop horizon out of image.
-    #img = img[60:, :, :]
+    img = img[60:, :, :]
     img = scipy.misc.imresize(img, (IMG_HEIGHT, IMG_WIDTH))
     img = img.astype('float32')
     # normalize the image
@@ -108,6 +108,7 @@ def steering_model():
     model.add(Dropout(.5))
     model.add(Dense(100, name="dense_1",
                     activation='relu'))
+    model.add(Dropout(.5))
     model.add(Dense(50, name="dense_2",
                     activation='relu'))
     model.add(Dense(10, name="dense_3",
@@ -127,11 +128,16 @@ def train_model():
     model.fit_generator(
         data_generator(train_set),
         samples_per_epoch=len(train_set),
-        nb_epoch=40,
+        nb_epoch=5,
         validation_data=data_generator(validation_set),
         nb_val_samples=len(validation_set),
         callbacks=[
-            ModelCheckpoint('model.h5', verbose=2, save_weights_only=True, save_best_only=True)
+            ModelCheckpoint(
+                'model.h5',
+                verbose=2,
+                save_weights_only=True,
+                save_best_only=True
+                )
             ]
         )
 
