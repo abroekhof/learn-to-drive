@@ -54,7 +54,7 @@ def create_data():
     rows = data_zero[:num_zero_angles]+data
     random.shuffle(rows)
 
-    # 80/20 training/validation split
+    # 90/10 training/validation split
     split = int(len(rows)*.1)
     train_data = rows[split:]
     print(len(train_data))
